@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  apigateway:
+    image: apigateway:latest
+    build:
+      context: .
+      dockerfile: ./ApiGatewayWithServiceDiscovery.ApiGateway/Dockerfile
+    ports:
+      - 8080:80
+    networks:
+      - default
+    depends_on:
+      - consul
+
+  consul:
+    container_name: consul
+    image: consul:latest
+    command: consul agent -dev -log-level=warn -ui -client=0.0.0.0
+    ports:
+      - '8500:8500'
+    hostname: consul
+    restart: always
+    networks:
+      - default
+
+  webapplication:
+    image: webapp:latest
+    build: 
+      context: .
+      dockerfile: ./ApiGatewayWithServiceDiscovery.WebApplication/Dockerfile
+    deploy:
+      replicas: 3
+    networks:
+      - default
+    depends_on:
+      - apigateway
+      - consul
+
+networks:
+  default:
